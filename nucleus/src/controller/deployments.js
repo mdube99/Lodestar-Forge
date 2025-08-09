@@ -358,8 +358,11 @@ export const destroyDeployment = async (req, res) => {
         };
 
         if (platform.platform === "aws") {
-            envVars.AWS_ACCESS_KEY_ID = String(platform.keyId);
-            envVars.AWS_SECRET_ACCESS_KEY = String(platform.secretKey);
+            // Only set AWS credentials if not using IAM role (keyId !== "IAM_ROLE")
+            if (platform.keyId !== "IAM_ROLE") {
+                envVars.AWS_ACCESS_KEY_ID = String(platform.keyId);
+                envVars.AWS_SECRET_ACCESS_KEY = String(platform.secretKey);
+            }
         } else if (platform.platform === "digitalocean") {
             envVars.DIGITALOCEAN_TOKEN = String(platform.secretKey);
         }
@@ -679,8 +682,11 @@ export const prepareDeployment = async (req, res) => {
     };
 
     if (platform.platform === "aws") {
-        envVars.AWS_ACCESS_KEY_ID = String(platform.keyId);
-        envVars.AWS_SECRET_ACCESS_KEY = String(platform.secretKey);
+        // Only set AWS credentials if not using IAM role (keyId !== "IAM_ROLE")
+        if (platform.keyId !== "IAM_ROLE") {
+            envVars.AWS_ACCESS_KEY_ID = String(platform.keyId);
+            envVars.AWS_SECRET_ACCESS_KEY = String(platform.secretKey);
+        }
     } else if (platform.platform === "digitalocean") {
         envVars.DIGITALOCEAN_TOKEN = String(platform.secretKey);
     }
@@ -996,8 +1002,11 @@ export const deployDeployment = async (req, res) => {
 
     // Set remaining environment variables based on the platform
     if (platform.platform === "aws") {
-        envVars.AWS_ACCESS_KEY_ID = String(platform.keyId);
-        envVars.AWS_SECRET_ACCESS_KEY = String(platform.secretKey);
+        // Only set AWS credentials if not using IAM role (keyId !== "IAM_ROLE")
+        if (platform.keyId !== "IAM_ROLE") {
+            envVars.AWS_ACCESS_KEY_ID = String(platform.keyId);
+            envVars.AWS_SECRET_ACCESS_KEY = String(platform.secretKey);
+        }
     } else if (platform.platform === "digitalocean") {
         envVars.DIGITALOCEAN_TOKEN = String(platform.secretKey);
     }
@@ -1059,19 +1068,22 @@ export const deployDeployment = async (req, res) => {
 
                     if (amiId) {
                         // If the instance has an AMI, describe the image
+                        const awsEnv = {
+                            AWS_DEFAULT_REGION: deploymentData.original.region
+                                ? deploymentData.original.region
+                                : stateResource.instances[0].attributes.arn.split(":")[3],
+                        };
+                        
+                        // Only add credentials if not using IAM role (keyId !== "IAM_ROLE")
+                        if (platform.keyId !== "IAM_ROLE") {
+                            awsEnv.AWS_ACCESS_KEY_ID = platform.keyId;
+                            awsEnv.AWS_SECRET_ACCESS_KEY = platform.secretKey;
+                        }
+                        
                         const result = execSync(
                             `aws ec2 describe-images --image-ids ${amiId} --query "Images[0].{Name:Name,Description:Description}" --output json`,
                             {
-                                env: {
-                                    AWS_ACCESS_KEY_ID: platform.keyId,
-                                    AWS_SECRET_ACCESS_KEY: platform.secretKey,
-                                    AWS_DEFAULT_REGION: deploymentData.original
-                                        .region
-                                        ? deploymentData.original.region
-                                        : stateResource.instances[0].attributes.arn.split(
-                                              ":",
-                                          )[3],
-                                },
+                                env: awsEnv,
                             },
                         );
 

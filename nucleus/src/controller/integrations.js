@@ -14,12 +14,18 @@ export const allIntegrations = async (req, res) => {
         })
         .from(integrations);
 
-    return res.status(200).json(rows);
+    // Add useIamRole derived field based on keyId marker
+    const rowsWithIamRole = rows.map(row => ({
+        ...row,
+        useIamRole: row.platform === "aws" && row.keyId === "IAM_ROLE"
+    }));
+
+    return res.status(200).json(rowsWithIamRole);
 };
 
 export const createIntegration = async (req, res) => {
     try {
-        const { name, platform, keyId, secretKey } = req.body;
+        const { name, platform, keyId, secretKey, useIamRole } = req.body;
 
         if (!name)
             return res.status(400).json({ error: "'name' is required." });
@@ -27,14 +33,31 @@ export const createIntegration = async (req, res) => {
             return res.status(400).json({ error: "'platform' is required." });
         if (!integrationPlatformEnum.enumValues.includes(platform))
             return res.status(400).json({ error: "Platform not supported." });
-        if (platform === "aws" && !keyId)
-            return res.status(400).json({ error: "'keyId' is required." });
-        if (!secretKey)
-            return res.status(400).json({ error: "'secretKey' is required." });
+        
+        // Validate AWS credentials based on IAM role usage
+        if (platform === "aws") {
+            if (!useIamRole && !keyId)
+                return res.status(400).json({ error: "'keyId' is required when not using IAM role." });
+            if (!useIamRole && !secretKey)
+                return res.status(400).json({ error: "'secretKey' is required when not using IAM role." });
+        } else {
+            // For non-AWS platforms, secret key is still required
+            if (!secretKey)
+                return res.status(400).json({ error: "'secretKey' is required." });
+        }
+
+        // Use marker approach: keyId = "IAM_ROLE" for IAM role integrations
+        const finalKeyId = useIamRole && platform === "aws" ? "IAM_ROLE" : keyId;
+        const finalSecretKey = useIamRole && platform === "aws" ? "unused" : secretKey;
 
         const result = await db
             .insert(integrations)
-            .values({ name, platform, keyId, secretKey })
+            .values({ 
+                name, 
+                platform, 
+                keyId: finalKeyId, 
+                secretKey: finalSecretKey
+            })
             .returning();
 
         if (result) {
@@ -42,6 +65,7 @@ export const createIntegration = async (req, res) => {
                 id: result[0].id,
                 platform: result[0].platform,
                 name: result[0].name,
+                useIamRole: finalKeyId === "IAM_ROLE",
             });
         } else {
             return res.status(500).json({ error: "An unknown error occured." });
