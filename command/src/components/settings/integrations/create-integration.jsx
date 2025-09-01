@@ -139,7 +139,7 @@ export function CreateIntegration() {
                         </Select>
                     </div>
                     {integration === "aws" && (
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center gap-2">
                             <Checkbox 
                                 id="useIamRole" 
                                 checked={useIamRole}
