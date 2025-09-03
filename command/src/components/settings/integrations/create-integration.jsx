@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/select";
 import { Tag } from "@/components/common/tag";
 
-import { addIntegration } from "@/actions/integrations";
+import { addIntegration, checkIntegration } from "@/actions/integrations";
 
 export function CreateIntegration() {
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -43,6 +43,8 @@ export function CreateIntegration() {
     const [secretKeyError, setSecretKeyError] = useState(false);
 
     const [useIamRole, setUseIamRole] = useState(false);
+
+    const [checkError, setCheckError] = useState();
 
     const addIntegrationHandler = async () => {
         if (!name) return setNameError(true);
@@ -74,6 +76,33 @@ export function CreateIntegration() {
             setKeyIdError(false);
             setSecretKeyError(false);
             setDialogOpen(false);
+            setCheckError(null);
+        }
+    };
+
+    const checkIntegrationHandler = async () => {
+        if (!name) return setNameError(true);
+        if (!integration) return setIntegrationError(true);
+
+        // Validate credentials based on IAM role usage
+        if (integration === "aws" && !useIamRole) {
+            if (!keyId) return setKeyIdError(true);
+            if (!secretKey) return setSecretKeyError(true);
+        } else if (integration !== "aws" && !secretKey) {
+            return setSecretKeyError(true);
+        }
+
+        const result = await checkIntegration(
+            integration,
+            useIamRole ? "" : keyId,
+            useIamRole && integration === "aws" ? "" : secretKey,
+            useIamRole,
+        );
+
+        if (result) {
+            setCheckError("valid");
+        } else {
+            setCheckError("invalid");
         }
     };
 
@@ -140,13 +169,13 @@ export function CreateIntegration() {
                     </div>
                     {integration === "aws" && (
                         <div className="flex items-center gap-2">
-                            <Checkbox 
-                                id="useIamRole" 
+                            <Checkbox
+                                id="useIamRole"
                                 checked={useIamRole}
                                 onCheckedChange={setUseIamRole}
                             />
-                            <Label 
-                                htmlFor="useIamRole" 
+                            <Label
+                                htmlFor="useIamRole"
                                 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                             >
                                 Use IAM Role
@@ -155,7 +184,9 @@ export function CreateIntegration() {
                     )}
                     {integration === "aws" && useIamRole && (
                         <p className="text-blue-500 text-xs">
-                            When using IAM roles, ensure your EC2 instance has the necessary IAM role attached with appropriate AWS permissions. No static credentials will be stored.
+                            When using IAM roles, ensure your EC2 instance has
+                            the necessary IAM role attached with appropriate AWS
+                            permissions. No static credentials will be stored.
                         </p>
                     )}
                     {integration === "aws" && !useIamRole && (
@@ -181,7 +212,9 @@ export function CreateIntegration() {
                                 value={secretKey}
                                 type="password"
                                 className={
-                                    secretKeyError ? "border border-red-500" : ""
+                                    secretKeyError
+                                        ? "border border-red-500"
+                                        : ""
                                 }
                                 onChange={(e) => setSecretKey(e.target.value)}
                             />
@@ -189,22 +222,36 @@ export function CreateIntegration() {
                     )}
                 </div>
                 <DialogFooter>
-                    {/* <Button
-            disabled={
-              integration === "" ||
-              secretKey === "" ||
-              (integration === "aws" && keyId == "")
-            }
-            variant={"secondary"}
-          >
-            Test
-          </Button>*/}
+                    {checkError === "valid" && (
+                        <p className="text-green-500 text-xs h-full flex items-center w-full">
+                            Integration successfully validated.
+                        </p>
+                    )}
+                    {checkError === "invalid" && (
+                        <p className="text-red-500 text-xs h-full flex items-center w-full">
+                            Invalid integration details. Please try again.
+                        </p>
+                    )}
+
+                    <Button
+                        disabled={
+                            integration === "" ||
+                            secretKey === "" ||
+                            (integration === "aws" && keyId == "")
+                        }
+                        variant={"secondary"}
+                        onClick={() => checkIntegrationHandler()}
+                    >
+                        Test
+                    </Button>
                     <Button
                         type="button"
                         disabled={
                             name == "" ||
                             integration == "" ||
-                            (integration === "aws" && !useIamRole && (keyId == "" || secretKey == "")) ||
+                            (integration === "aws" &&
+                                !useIamRole &&
+                                (keyId == "" || secretKey == "")) ||
                             (integration !== "aws" && secretKey == "")
                         }
                         onClick={() => addIntegrationHandler()}

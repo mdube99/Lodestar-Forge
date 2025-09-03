@@ -3,7 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { apiFetch } from "@/lib/utils";
 
-export const addIntegration = async (name, platform, keyId, secretKey, useIamRole) => {
+export const addIntegration = async (
+    name,
+    platform,
+    keyId,
+    secretKey,
+    useIamRole,
+) => {
     try {
         const integration = await apiFetch("/integrations", "POST", {
             name,
@@ -29,5 +35,25 @@ export const deleteIntegration = async (id) => {
         throw new Error(e);
     } finally {
         revalidatePath("/settings", "layout");
+    }
+};
+
+export const checkIntegration = async (
+    platform,
+    keyId,
+    secretKey,
+    useIamRole,
+) => {
+    try {
+        const response = await apiFetch("/integrations/check", "POST", {
+            platform,
+            keyId,
+            secretKey,
+            useIamRole,
+        });
+        return response;
+    } catch (e) {
+        console.log(e);
+        throw new Error(e);
     }
 };
