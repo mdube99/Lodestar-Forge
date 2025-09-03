@@ -24,6 +24,19 @@ RUN ARCH=$(dpkg --print-architecture) && \
     ./aws/install && \
     rm -rf aws awscliv2.zip
 
+# Install Digital Ocean CLI
+RUN ARCH=$(dpkg --print-architecture) && \
+    if [ "$ARCH" = "amd64" ]; then \
+    curl -L "https://github.com/digitalocean/doctl/releases/download/v1.141.0/doctl-1.141.0-linux-amd64.tar.gz" -o "doctl.tar.gz" ; \
+    elif [ "$ARCH" = "arm64" ]; then \
+    curl -L "https://github.com/digitalocean/doctl/releases/download/v1.141.0/doctl-1.141.0-linux-arm64.tar.gz" -o "doctl.tar.gz"; \
+    else \
+    echo "Unsupported architecture: $ARCH" && exit 1; \
+    fi && \
+    tar xf doctl.tar.gz && \
+    mv doctl /usr/local/bin && \
+    rm -rf doctl.tar.gz
+
 # Install Ansible
 RUN pipx ensurepath
 RUN pipx install --include-deps ansible
