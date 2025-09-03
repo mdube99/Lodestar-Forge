@@ -169,7 +169,7 @@ Below is an outline of the planned features for the upcoming major releases of L
 - [x] Appearance settings
 - [x] Quick install script and one-liner
 - [x] AWS IAM role support
-- [ ] Integration "test connection" button
+- [x] Integration "test connection" button
 
 **Version 0.3.x**
 - [ ] Template variable regex support
