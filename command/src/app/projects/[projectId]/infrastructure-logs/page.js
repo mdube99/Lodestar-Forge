@@ -131,7 +131,7 @@ export default function InfrastructureLogsPage(props) {
                 <CardHeader>
                     <CardTitle className="text-2xl">Infrastructure Logs</CardTitle>
                     <p className="text-sm text-muted-foreground">
-                        View logs from Mythic C2 servers and Caddy redirectors
+                        View logs from C2 servers and Redirectors
                     </p>
                 </CardHeader>
                 <CardContent className="flex-1 min-h-0 overflow-hidden max-w-full">
