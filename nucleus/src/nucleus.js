@@ -16,12 +16,16 @@ import { router as resourceRoutes } from "./route/resources.js";
 import { router as logRoutes } from "./route/logs.js";
 import { router as fileRoutes } from "./route/files.js";
 import { router as settingRoutes } from "./route/settings.js";
+import { router as infrastructureLogRoutes } from "./route/infrastructureLogs.js";
 
 // Import middlewares
 import { authenticatedUser } from "./middleware/auth.js";
 import { checkDeploymentMiddleware } from "./middleware/deployment.js";
 import { checkDomainMiddleware } from "./middleware/domain.js";
 import { checkInfrastructureMiddleware } from "./middleware/infrastructure.js";
+
+// Import services
+import { startInfrastructureLogCollection } from "./lib/infrastructureLogCollector.js";
 
 // Configure env
 dotenv.config();
@@ -34,6 +38,7 @@ app.use(express.json());
 // Use routes
 app.use("/auth", authRoutes);
 app.use("/logs", authenticatedUser, logRoutes);
+app.use("/infrastructure-logs", authenticatedUser, infrastructureLogRoutes);
 app.use("/ssh-keys", authenticatedUser, sshKeyRoutes);
 app.use("/users", authenticatedUser, userRoutes);
 app.use("/integrations", authenticatedUser, integrationRoutes);
@@ -66,4 +71,7 @@ app.use(
 // Start server
 app.listen(port, () => {
     console.log(`Nucleus listening on port ${port}`);
+    
+    // Start infrastructure log collection
+    startInfrastructureLogCollection();
 });

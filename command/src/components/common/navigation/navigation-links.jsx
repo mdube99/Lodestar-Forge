@@ -1,6 +1,6 @@
 "use client";
 
-import { Bug, House, Link2, List, Shapes } from "lucide-react";
+import { Bug, House, Link2, List, Shapes, Server } from "lucide-react";
 
 import {
     SidebarGroup,
@@ -25,6 +25,11 @@ export function NavLinks({ projectId }) {
             title: "Activity Log",
             url: `/projects/${projectId}/activity`,
             icon: List,
+        },
+        {
+            title: "Infrastructure Logs",
+            url: `/projects/${projectId}/infrastructure-logs`,
+            icon: Server,
         },
         {
             title: "Deployments",
