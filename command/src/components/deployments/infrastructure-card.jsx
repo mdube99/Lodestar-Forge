@@ -704,7 +704,7 @@ export function InfrastructureCard({
                                                 <Button
                                                     variant="outline"
                                                     role="combobox"
-                                                    aria-expanded={open}
+                                                    aria-expanded={infrastructureTemplateOpen}
                                                     className={`w-full justify-between font-normal ${infrastructureTemplate ? "" : "text-muted-foreground"}`}
                                                 >
                                                     {infrastructureTemplate
