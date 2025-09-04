@@ -56,7 +56,7 @@ export function LogDialog({ log }) {
               <RefreshCw />
             </Button>
             {/* Only show the copy button if page is secure (otherwise it will not work) */}
-            {location.protocol === "https:" && (
+            {typeof window !== 'undefined' && window.location.protocol === "https:" && (
               <Button
                 size="icon"
                 variant="outline"
